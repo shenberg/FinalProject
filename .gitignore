@@ -1,0 +1,10 @@
+
+*.class
+
+SP/SPCalculator.tokens
+
+SP/SPCalculatorLexer.tokens
+
+*.java
+
+*.o
