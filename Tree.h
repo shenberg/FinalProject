@@ -33,7 +33,7 @@ Node* varSubStringToNode(char* line, const size_t start, const size_t end);
 Node* opSubStringToNode(char* line, size_t start, size_t end);
 Node* generalSubStringToNode(char* line, size_t start, size_t end);
 Node* stringToTree(char* line);
-double calcTree(Node* tree, bool* status);
+float calcTree(Node* tree, bool* status);
 void freeTree(Node* tree);
 void attachNewChildToParentBySubstring(Node* parent, char* line, size_t start, size_t end);
 

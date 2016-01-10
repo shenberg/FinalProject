@@ -51,14 +51,14 @@ Node* varSubStringToNode(char* line, const size_t start, const size_t end) {
     strncpy(var, line + start + 1, end - start - 1);
     var[end - start - 1] = '\0';
     if (hashIsEmpty() || !hashContains(var)) {
-        printError();
-        exit(1);
+        Node *result = newOpNode(INVALID);
+        // mark as invalid tree. when calculating the tree,
+        // this leaf will be a "witness" that the tree is infected
+        // and the calculation will return "invalid result"
+        return result;
     }
     else {
-        char* varValueString = hashGetValue(var);
-        int varValueInt = atoi(varValueString);
-        free(varValueString);
-        Node *result = newIntNode(varValueInt);
+        Node *result = newIntNode(*hashGetValue(var)); // assuming hashGetValue(var) is int*
         return result;
     }
 }
@@ -128,6 +128,9 @@ void attachNewChildToParentBySubstring(Node* parent, char* line, size_t start, s
 }
 
 Node* stringToTree(char* line) {
+    // first we replace operators strings with chars
+    // for example (min(1)(2)) => (?(1)(2))
+    //  this promises us that every alphabetic char is a part of a variable name
     char newline[MAX_LINE_LEN];
     size_t i, j;
     size_t original_len = strlen(line) + 1; // length including the '\0'
@@ -156,16 +159,41 @@ Node* stringToTree(char* line) {
     return result;
 }
 
-double calcTree(Node* tree, bool* status) {
+float calcTree(Node* tree, bool* status) {
     if (tree->isNum) {
         return tree->val.num;
     }
     else { // node is op
-        double result;
+        float result;
         int i;
         Op op = tree->val.op;
         if (op == SUB && tree->numOfSons == 1) { // unary minus ?
             result = -calcTree(tree->children[0], status);
+        }
+        else if (op == MED) {
+            float* floatsForMedian = (float*)malloc(tree->numOfSons * sizeof(float));
+            if (floatsForMedian == NULL) {
+                printError();
+                exit(1);
+            }
+            for (i = 0; i < tree->numOfSons; i++) {
+                floatsForMedian[i] = calcTree(tree->children[i], status);
+            }
+            qsort(floatsForMedian, (size_t)(tree->numOfSons), sizeof(float), compare);
+            if (tree->numOfSons % 2 == 1) { // odd number of sons, greather than 0
+                result = floatsForMedian[(tree->numOfSons - 1) / 2];
+            }
+            else { // even number of sons, greater than 0
+                result = (floatsForMedian[(tree->numOfSons / 2)] + floatsForMedian[(tree->numOfSons / 2) - 1]) / 2;
+            }
+            free(floatsForMedian);
+        }
+        else if (op == AVG) {
+            result = 0;
+            for (i = 0; i < tree->numOfSons; i++) {
+                result += calcTree(tree->children[i], status);
+            }
+            result /= tree->numOfSons;
         }
         else {
             result = calcTree(tree->children[0], status); // assuming operator has at least one operand!

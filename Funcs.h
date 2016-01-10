@@ -8,8 +8,10 @@
 #include "Tree.h"
 
 void printError();
+int compare (const void* a, const void* b);
 int atoiForSubstring(const char string[], size_t start, size_t end);
-double generalBinaryCalc(double a, double b, Op op, bool* validResult);
+int floatIsInt(float a);
+float generalBinaryCalc(float a, float b, Op op, bool* validResult);
 
 
 #endif //SP_EX3_FUNCS_H
