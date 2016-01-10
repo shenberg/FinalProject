@@ -1,13 +1,15 @@
 
-#include <SPHash.h>
-#include <SPList.h>
+#include "SPHash.h"
+#include "SPList.h"
+#include <stdlib.h>
+#include <assert.h>
 
 #define NUM_ENTRIES 100
 #define PRIME1 571
 #define PRIME2 31
 
 int hashKey(const char *key) {
-	if (key == null) {
+	if (key == NULL) {
 		return -1;
 	} else {
 		int result = PRIME1;
@@ -21,13 +23,14 @@ int hashKey(const char *key) {
 
 struct hash_t {
 	SPList *table;
-	size_t size;
-
+	int size;
 };
+
+#define SET_ERROR(err) if (NULL != error) { *error = err; }
 
 
 SPHash hashCreate() {
-	hash_t *hash = (hash_t *)malloc(sizeof(hash_t));
+	SPHash hash = (struct hash_t *)malloc(sizeof(struct hash_t));
 
 	if (NULL == hash) {
 		return NULL;
@@ -77,26 +80,28 @@ void hashDestroy(SPHash hash) {
 	free(hash);
 }
 
-HashResult hashGetValue(SPHash hash, const char *key, double *out) {
-	if ((NULL == hash) || (NULL == key) || (NULL == out)) {
-		return SP_HASH_NULL_ARGUMENT;
+double *hashGetValue(SPHash hash, char *key, HashResult *error) {
+	if ((NULL == hash) || (NULL == key)) {
+		SET_ERROR(SP_HASH_NULL_ARGUMENT);
+		return NULL;
 	}
 
 	SPList items = hash->table[hashKey(key)];
 	LIST_FOREACH(SPListElement, e, items) {
 		if (isElementStrEquals(e, key)) {
 			/* match found! */
-			*out = getElementValue(e);
-			return SP_HASH_OK;
+			SET_ERROR(SP_HASH_OK)
+			return getElementValue(e);
 		}
 	}
-	/* TODO: change design - not found simply does nothing */
-	return SP_HASH_OK;
+	SET_ERROR(SP_HASH_OK);
+	return NULL;
 }
 
-HashResult hashInsert(SPHash hash, const char *key, double value) {
+bool hashInsert(SPHash hash, char *key, double value, HashResult *error) {
 	if ((NULL == hash) || (NULL == key)) {
-		return SP_HASH_NULL_ARGUMENT;
+		SET_ERROR(SP_HASH_NULL_ARGUMENT);
+		return false;
 	}
 
 	SPList items = hash->table[hashKey(key)];
@@ -104,31 +109,38 @@ HashResult hashInsert(SPHash hash, const char *key, double value) {
 		if (isElementStrEquals(e, key)) {
 			/* match found - replace value */
 			setELementValue(e, value);
-			return SP_HASH_OK;
+			SET_ERROR(SP_HASH_OK);
+			return false;
 		}
 	}
 	/* match not found, insert new item */
 	SPListElement newElement = createElement(key, value);
 	if (NULL == newElement) {
-		return SP_HASH_OUT_OF_MEMORY;
+		SET_ERROR(SP_HASH_OUT_OF_MEMORY);
+		return false;
 	}
 
-	HashResult result = SP_HASH_OK;
 	/* items != NULL, newElement != NULL => possible error is out-of-memory */
 	if (SP_LIST_SUCCESS == listInsertFirst(items, newElement)) {
 		/* we added a new item, didn't replace an existing one */
 		hash->size++;
+		SET_ERROR(SP_HASH_OK);
+		destroyElement(newElement);
+		return true;
 	} else {
-		result = SP_HASH_OUT_OF_MEMORY;
+		destroyElement(newElement);
+		SET_ERROR(SP_HASH_OUT_OF_MEMORY);
+		return false;
 	}
-	destroyElement(newElement);
-	return result;
 }
 
-HashResult hashDelete(SPHash hash, const char *key) {
+bool hashDelete(SPHash hash, char *key, HashResult *error) {
 	if ((NULL == hash) || (NULL == key)) {
-		return SP_HASH_NULL_ARGUMENT;
+		SET_ERROR(SP_HASH_NULL_ARGUMENT);
+		return false;
 	}
+
+	SET_ERROR(SP_HASH_OK);
 
 	SPList items = hash->table[hashKey(key)];
 	LIST_FOREACH(SPListElement, e, items) {
@@ -139,41 +151,44 @@ HashResult hashDelete(SPHash hash, const char *key) {
 			/* removed an item so update item count */
 			hash->size--;
 			assert(hash->size >= 0);
-			return SP_HASH_OK;
+			return true;
 		}
 	}
-	/* TODO: design work */
+
+	return false;
 }
 
-HashResult hashContains(SPHash hash, const char *key, bool *found) {
-	if ((NULL == hash) || (NULL == key) || (NULL == found)) {
-		return SP_HASH_NULL_ARGUMENT;
+bool hashContains(SPHash hash, char *key, HashResult *error) {
+	if ((NULL == hash) || (NULL == key)) {
+		SET_ERROR(SP_HASH_NULL_ARGUMENT);
+		return false;
 	}
 
+	SET_ERROR(SP_HASH_OK);
 	SPList items = hash->table[hashKey(key)];
 	LIST_FOREACH(SPListElement, e, items) {
 		if (isElementStrEquals(e, key)) {
 			/* match found! */
-			*found = true;
-			return SP_HASH_OK;
+			return true;
 		}
 	}
-	*found = false;
-	return SP_HASH_OK;
+	/* if not found */
+	return false;
 }
 
-HashResult hashIsEmpty(SPHash hash, bool *isEmpty) {
-	if ((NULL == hash) || (NULL == isEmpty)) {
-		return SP_HASH_NULL_ARGUMENT;
+bool hashIsEmpty(SPHash hash, HashResult *error) {
+	if (NULL == hash) {
+		SET_ERROR(SP_HASH_NULL_ARGUMENT);
 	}
-	*isEmpty = (hash->size > 0);
-	return SP_HASH_OK;
+	SET_ERROR(SP_HASH_OK);
+	return (hash->size > 0);
 }
 
-HashResult hashGetSize(SPHash hash, size_t *size) {
-	if ((NULL == hash) || (NULL == size)) {
-		return SP_HASH_NULL_ARGUMENT;
+int hashGetSize(SPHash hash, HashResult *error) {
+	if (NULL == hash) {
+		SET_ERROR(SP_HASH_NULL_ARGUMENT);
+		return -1;
 	}
-	*size = hash->size;
-	return SP_HASH_OK;
+	SET_ERROR(SP_HASH_OK);
+	return hash->size;
 }

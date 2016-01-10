@@ -1,6 +1,8 @@
 #ifndef SPHASH_H__
 #define SPHASH_H__
 
+#include <stdbool.h>
+
 typedef struct hash_t* SPHash;
 
 typedef enum HashResult_t {
@@ -25,20 +27,24 @@ SPHash hashCreate();
  * the stored free function.
  *
  * @param hash Target SPHash to be deallocated. If hash is NULL nothing will be
+ * @param result result of the operation, if NULL then not written to.
  * done
  */
 void hashDestroy(SPHash hash);
 
-HashResult hashGetValue(SPHash hash, const char *key, double *out);
+/**
+ * 
+ */
+double *hashGetValue(SPHash hash, char *key, HashResult *error);
 
-HashResult hashInsert(SPHash hash, const char *key, double value);
+bool hashInsert(SPHash hash, char *key, double value, HashResult *error);
 
-HashResult hashDelete(SPHash hash, const char *key);
+bool hashDelete(SPHash hash, char *key, HashResult *error);
 
-HashResult hashContains(SPHash hash, const char *key, bool *found);
+bool hashContains(SPHash hash, char *key, HashResult *error);
 
-HashResult hashIsEmpty(SPHash hash, bool *isEmpty);
+bool hashIsEmpty(SPHash hash, HashResult *error);
 
-HashResult hashGetSize(SPHash hash, size_t *size);
+int hashGetSize(SPHash hash, HashResult *error);
 
 #endif
