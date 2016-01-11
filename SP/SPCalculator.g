@@ -75,6 +75,8 @@ im_exp returns [SPTree tree]	: e1=INT {$tree = new SPTree($e1.text);}
 								| e4=variable {$tree = $e4.tree;}
 								;
 
+// check for a function call
+// transform function string into appropriate sigil for easier handling in C
 func_call returns [SPTree tree] : ( MIN {$tree = new SPTree("%");}
 								  | MAX {$tree = new SPTree("@");}
 								  | AVG {$tree = new SPTree("!");}
