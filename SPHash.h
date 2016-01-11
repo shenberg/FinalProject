@@ -5,6 +5,9 @@
 
 typedef struct hash_t* SPHash;
 
+/**
+ * possible error causes
+ */
 typedef enum HashResult_t {
 	SP_HASH_OK,
 	SP_HASH_OUT_OF_MEMORY,
@@ -27,23 +30,77 @@ SPHash hashCreate();
  * the stored free function.
  *
  * @param hash Target SPHash to be deallocated. If hash is NULL nothing will be
- * @param result result of the operation, if NULL then not written to.
  * done
  */
 void hashDestroy(SPHash hash);
 
 /**
- * 
+ * hashGetValue: Get a value got a key from the hash-table
+ *
+ * @param hash hashtable to read from
+ * @param key the key to look up
+ * @param error out param, operation status. Can be NULL if don't care
+ *
+ * @return pointer to copy of value if key is in hash table (user must free())
+ *         NULL if key not in hash table or on error
  */
 double *hashGetValue(SPHash hash, char *key, HashResult *error);
 
+/**
+ * hashInsert: insert a key->value mapping to the hash-table. If key already
+ * maps to old_value, make it map to value instead.
+ *
+ * @param hash hashtable to read from
+ * @param key the key
+ * @param value the value
+ * @param error out param, operation status. Can be NULL if don't care
+ *
+ * @return true if key was added to hash-table (meaning hash table did not 
+ *         contain the key already), false otherwise
+ */
 bool hashInsert(SPHash hash, char *key, double value, HashResult *error);
 
+/**
+ * hashDelete: Remove mapping for given key
+ *
+ * @param hash hashtable to remove the key from
+ * @param key the key to remove
+ * @param error out param, operation status. Can be NULL if don't care
+ *
+ * @return true if key was removed successfully, false otherwise
+ *         (error or key not in hash-table)
+ */
 bool hashDelete(SPHash hash, char *key, HashResult *error);
 
+/**
+ * hashContains: does the hash table contain a given key?
+ *
+ * @param hash hashtable to read from
+ * @param key the key to test for
+ * @param error out param, operation status. Can be NULL if don't care
+ *
+ * @return true if key in hash-table, false otherwise
+ */
 bool hashContains(SPHash hash, char *key, HashResult *error);
 
+/**
+ * hashIsEmpty: does the hash-table have any key->value mappings?
+ *
+ * @param hash hashtable to test
+ * @param error out param, operation status. Can be NULL if don't care
+ *
+ * @return true if hash table is valid and has no mappings, false otherwise
+ */
 bool hashIsEmpty(SPHash hash, HashResult *error);
+
+/**
+ * hashGetSize: get number of key->value mappings in the hash table
+ *
+ * @param hash hashtable to read from
+ * @param error out param, operation status. Can be NULL if don't care
+ *
+ * @return number of key->value mappings in the hash-table. -1 on error.
+ */
 
 int hashGetSize(SPHash hash, HashResult *error);
 
