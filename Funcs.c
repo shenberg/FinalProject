@@ -8,8 +8,8 @@ void printError() {
     printf("Unexpected error occoured!\n");
 }
 
-int floatIsInt(float a) {
-    return (a == ceil(a) || a == floor(a));
+bool floatIsInt(double a) {
+    return (a == ceil(a) || a == floor(a)) ? true : false;
 }
 
 int compare (const void* a, const void* b) {
@@ -19,7 +19,7 @@ int compare (const void* a, const void* b) {
     else { return -1; }
 }
 
-float generalBinaryCalc(float a, float b, Op op, bool* validResult) {
+double generalBinaryCalc(double a, double b, Op op, bool* validResult) {
     switch (op) {
         case ADD:
             return a + b;
@@ -37,7 +37,7 @@ float generalBinaryCalc(float a, float b, Op op, bool* validResult) {
             }
         }
         case DOL: {
-            if (a <= b && floatIsInt(a) && floatIsInt(b)) {
+            if (a <= b && double(a) && double(b)) {
                 // by series sum formula
                 return ((b - a + 1) / 2) * (a + b);
             }
@@ -58,6 +58,18 @@ float generalBinaryCalc(float a, float b, Op op, bool* validResult) {
     return NaN;
 }
 
+char opEnumToChar(Op op):{
+    switch (op) {
+        case ADD: return '+';
+        case SUB: return '-';
+        case MUL: return '*';
+        case DIV: return '/';
+        case DOL: return '$';
+        default:;
+    }
+    return NULL;
+}
+
 int atoiForSubstring(const char string[], size_t start, size_t end) {
     const size_t len = end - start + 1;
     char* subString = (char*)malloc((len + 1)*sizeof(char));
@@ -70,4 +82,21 @@ int atoiForSubstring(const char string[], size_t start, size_t end) {
     int result = atoi(subString);
     free(subString);
     return result;
+}
+
+void addParenthesisBinaryOpAndExpressionToOriginalExpression(char* src, Op op, char* exp) {
+    char buffer[MAX_LINE_LEN];
+    buffer[0] = '(';
+    buffer[1] = '\0';
+    strcat(exp, buffer);
+    //buffer[0] = '(';
+    //buffer[1] = '\0';
+    char opString[2];
+    opString[0] = opEnumToChar(op);
+    opString[1] = '\0';
+    strcat(op, buffer);
+    strcar(exp, buffer);
+    buffer[strlen(buffer)] = ')';
+    buffer[strlen(buffer)] = '\0';
+    strcpy(buffer, src);
 }
