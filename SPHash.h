@@ -6,9 +6,9 @@
 typedef struct hash_t* SPHash;
 
 typedef enum HashResult_t {
-	SP_HASH_OK,
-	SP_HASH_OUT_OF_MEMORY,
-	SP_HASH_NULL_ARGUMENT
+	SP_HASH_OK = 0,
+	SP_HASH_OUT_OF_MEMORY = 1,
+	SP_HASH_NULL_ARGUMENT = 2
 } HashResult;
 
 

@@ -4,12 +4,83 @@
 
 #include "API.h"
 
+bool argsHandler(int argc, char** argv, SPHash* table, HashResult* msg, FILE** output){
+    char varFile[MAX_LINE_LEN] = "";
+    char outFile[MAX_LINE_LEN] = "";
+
+    if (!argsSanityCheck(argc, argv, varFile, outFile)
+        || !assignOutput(out_fname, output)
+        || !insertVarsFromFileToHashTable(var_fname, table, msg)
+        || *msg != SP_HASH_OK) {
+        return false;
+    }
+    return true;
+}
+
+bool argsSanityCheck(int argc, char** argv, char* var_file, char* out_file) {
+    if (argc == 1) { return true; } // no args
+    else {
+        int i;
+        if (argc != 3 && argc != 5) {
+            printf("Invalid command line arguments, use [-v filename1] [-o filename2])\n");
+            return false;
+        }
+        for (i = 1; i < argc; i += 2) {
+            if (!strcmp(argv[i], "-v") && !strcmp(var_file, "")) {
+                strcpy(var_file, argv[i + 1]);
+            }
+            else if (!strcmp(argv[i], "-o") && !strcmp(out_file, "")) {
+                strcpy(out_file, argv[i + 1]);
+            }
+        }
+        if (var_file && out_file && !strcmp(var_file, out_file)) {
+            printf("Files must be different\n");
+            return false;
+        }
+        return true;
+    }
+}
+
+bool assignOutput(char* fname, FILE** output) {
+    if(!strcmp(fname, "")) { return true; }
+    else {
+        if (!(*output = fopen(fname, "w"))) {
+            printf("Output file is read-only or cannot be created\n");
+            return false;
+        }
+    }
+    return true;
+}
+
+
+bool insertVarsFromFileToHashTable(char* fname, SPHash* hashTable, HashResult* msg) {
+    char line[MAX_LINE_LEN];
+    char* currentVar;
+    char* currentVal;
+    FILE* varFile;
+    if (!strcmp(fname,"")) { return true; } // no file, no need to insert vars
+    if (!(varFile = fopen(fname, "r"))) {
+        printf("Variable init file doesn’t exist or is not readable\n");
+        return false;
+    }
+    while (fgets(line, sizeof(line), varFile)) {
+        currentVar = strtok(line, DELS2);
+        currentVal = strtok(NULL, DELS2);
+        if (!hashInsert(hashTable, var, atof(val), msg)) {
+            return false;
+        }
+    }
+    fclose(varFile);
+    return true;
+}
+
+
 void printError() {
     printf("Unexpected error occoured!\n");
 }
 
 bool floatIsInt(double a) {
-    return (a == ceil(a) || a == floor(a)) ? true : false;
+    return a == ceil(a) || a == floor(a);
 }
 
 int compare (const void* a, const void* b) {
