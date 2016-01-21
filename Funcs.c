@@ -4,6 +4,20 @@
 
 #include "API.h"
 
+void printHashMsgToOutput(HashResult msg, FILE* output) {
+    switch(msg) {
+        case SP_HASH_OUT_OF_MEMORY:
+            fprintf(output, "Unexpected error occurred!\n");
+            break;
+        case SP_HASH_NULL_ARGUMENT:
+            fprintf(output, "Invalid Result\n");
+            break;
+        default:
+            break;
+    }
+}
+
+
 bool argsHandler(int argc, char** argv, SPHash* table, HashResult* msg, FILE** output){
     char varFile[MAX_LINE_LEN] = "";
     char outFile[MAX_LINE_LEN] = "";
