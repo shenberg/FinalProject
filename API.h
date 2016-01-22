@@ -2,8 +2,8 @@
 // Created by Mattan on 19/12/2015.
 //
 
-#ifndef SP_EX3_API_H
-#define SP_EX3_API_H
+#ifndef SP_EX4_API_H
+#define SP_EX4_API_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,4 +25,4 @@
 #define DELS " \t\r\n"
 #define DELS2 " \t\r\n="
 
-#endif //SP_EX3_API_H
+#endif //SP_EX4_API_H

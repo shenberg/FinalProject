@@ -12,7 +12,7 @@ typedef enum {
 } Op;
 
 typedef enum {
-    OP, NUM, VAR, EQU,
+    TYPE_OP, TYPE_NUM, TYPE_VAR, TYPE_EQU,
 } Node_Type;
 
 typedef union {
@@ -21,13 +21,7 @@ typedef union {
     char var[MAX_LINE_LEN];
 } Node_Value;
 
-typedef struct Node_t {
-    //Node_Value val
-    Node_Type;
-    Node_Value val;
-    int numOfSons;
-    struct Node_t* children[MAX_SONS];
-} Node;
+typedef struct Node_t Node;
 
 
 Node* newNode();

@@ -26,7 +26,7 @@ void printExpressionToOutputRec(Node* root, char* output, bool* valid) {
     // NUMBER / VAR
 
     if (root->Node_Type == NUM) {
-        if (sprintf(temp, "(%s)", root->val.num) < 0) {
+        if (sprintf(temp, "(%f)", root->val.num) < 0) {
             *valid = false;
             return;
         }

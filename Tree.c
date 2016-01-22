@@ -3,7 +3,15 @@
 //
 
 #include "API.h"
+#include "Tree.h"
 
+
+typedef struct Node_t {
+    Node_Type type;
+    Node_Value val;
+    int numOfSons;
+    struct Node_t* children[MAX_SONS];
+} Node;
 
 void freeTree(Node* tree) {
     if (tree == NULL) {

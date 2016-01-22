@@ -82,9 +82,9 @@ func_call returns [SPTree tree] : ( MIN {$tree = new SPTree("%");}
 								  | AVG {$tree = new SPTree("!");}
 								  | MEDIAN {$tree = new SPTree("?");}
 								  )
-								  RB e1=exp {$tree.insertChild($e1.tree);}
+								  LB e1=exp {$tree.insertChild($e1.tree);}
 								  (COMMA e2=exp {$tree.insertChild($e2.tree);})*
-								  LB
+								  RB
 								;
 
 variable returns [SPTree tree] : e1=VAR {$tree = new SPTree($e1.text);}
@@ -105,5 +105,7 @@ MAX: 'max';
 AVG: 'average';
 MEDIAN: 'median';
 COMMA: ',';
-VAR: [A-Za-z]+;
+// variable token must be after functions to make sure we don't tag functions
+// as variables
+VAR: [A-Za-z]+; 
 END: ';' .*;

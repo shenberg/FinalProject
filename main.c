@@ -1,4 +1,5 @@
 #include "API.h"
+#include "SPHash.h"
 
 // decided not to implement getRootStr() and getChildAtIndex(),
 // as it requires redundant dynamic memory allocation,
