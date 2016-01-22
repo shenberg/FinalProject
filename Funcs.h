@@ -10,7 +10,7 @@
 void printError();
 int compare (const void* a, const void* b);
 int atoiForSubstring(const char string[], size_t start, size_t end);
-int doubleIsInt(double a);
+bool doubleIsInt(double a);
 double generalBinaryCalc(double a, double b, Op op, bool* validResult);
 
 void printTreeExpression(Node *node, FILE *output);

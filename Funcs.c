@@ -11,39 +11,31 @@
 // return NULL for regular operators;
 const char *opToFunc(Op op) {
     switch (op) {
-    case MIN:
-        return "min";
-    case MAX:
-        return "max";
-    case MED:
-        return "median";
-    case AVG:
-        return "average";
-    default:
-        return NULL;
+    case MIN: return "min";
+    case MAX: return "max";
+    case MED: return "median";
+    case AVG: return "average";
+    default: return NULL;
     }
 }
 
 // regular operator -> type to string
 const char *opToStr(Op op) {
     switch(op) {
-    case ADD:
-        return "+";
-    case SUB:
-        return "-";
-    case MUL:
-        return "*";
-    case DIV:
-        return "/";
-    case DOL:
-        return "$";
-    default:
-        return NULL;
+    case ADD: return "+";
+    case SUB: return "-";
+    case MUL: return "*";
+    case DIV: return "/";
+    case DOL: return "$";
+    default: return NULL;
     }
 }
+
 void printInnerExpression(Node *node, FILE *output) {
     if (node->type == TYPE_NUM) {
-        fprintf(output, "%.2f", node->val.num);
+        // print as integer since expression tree only has integers:
+        // only results and variables can be doubles
+        fprintf(output, "%.0f", node->val.num);
     } else if (node->type == TYPE_VAR) {
         fprintf(output, "%s", node->val.var);
     } else {
@@ -105,114 +97,7 @@ void printTreeExpression(Node *node, FILE *output) {
     }
     fprintf(output, ")");
 }
-/*
-int printExpressionToOutput(Node* root, FILE* output){
-    char stringToPrint[MAX_LINE_LEN * 2 + 1];
-    strcpy(outputString, "");
-    printExpressionToOutputRec(root, outputString, valid);
-    if (!valid) { return -1; }
-    return fprintf(output, "%s\n", outputString);
-}
 
-void printExpressionToOutputRec(Node* root, char* output) {
-    size_t i;
-    char temp[MAX_LINE_LEN + 1];
-
-    // if there was an error, do nothing
-    if (!valid || !root)
-        return;
-
-    if (root == NULL)
-        return;
-
-    // NUMBER / VAR
-
-    if (root->Node_Type == TYPE_NUM) {
-        if (sprintf(temp, "(%.2f)", root->val.num) < 0) {
-            *valid = false;
-            return;
-        }
-        strcat(output, temp);
-        return;
-
-    }
-
-    else if (root->Node_Type == VAR) {
-        if (sprintf(temp, "(%s)", root->val.var) < 0) {
-            *valid = false;
-            return;
-        }
-        strcat(output, temp);
-        return;
-    }
-
-    // ASSIGNMENT
-    else if (getNodeType(root) == EQUAL) {
-        if (sprintf(temp, "(%s=", getNodeValue(getChildAt(root, 0))) < 0) {
-            *msg = SP_TREE_ERROR_PRINT_FAILED;
-            return;
-        }
-        strcat(output, temp);
-        if ((getNodeType(getChildAt(root, 1)) == NUMBER) || (getNodeType(getChildAt(root, 1)) == VARIABLE))
-            strcat(output, getNodeValue(getChildAt(root, 1)));
-        else
-            printTreeExpressionRec(getChildAt(root, 1), output, msg);
-        strcat(output, ")");
-        return;
-    }
-
-    // FUNCTIONS
-    if ((getNodeType(root) == MIN) || (getNodeType(root) == MAX)\
-    || (getNodeType(root) == AVERAGE) || (getNodeType(root) == MEDIAN)) {
-        if (sprintf(temp, "(%s(", getNodeValue(root)) < 0) {
-            *msg = SP_TREE_ERROR_PRINT_FAILED;
-            return;
-        }
-        strcat(output, temp);
-        for (i = 0; i < getNodeChildrenSize(root); ++i) {
-            if ((getNodeType(getChildAt(root,i)) == NUMBER) || (getNodeType(getChildAt(root,i)) == VARIABLE))
-                strcat(output, getNodeValue(getChildAt(root, i)));
-            else
-                printTreeExpressionRec(getChildAt(root,i), output, msg);
-            if (i < (getNodeChildrenSize(root) - 1))
-                strcat(output, ",");
-        }
-        strcat(output, "))");
-        return;
-    }
-
-    // BINARY
-    if (getNodeChildrenSize(root) == 2) {
-        strcat(output, "(");
-        for (i = 0; i < 2; ++i ) {
-            if ((getNodeType(getChildAt(root, i)) == NUMBER) || (getNodeType(getChildAt(root, i)) == VARIABLE))
-                strcat(output, getNodeValue(getChildAt(root, i)));
-            else
-                printTreeExpressionRec(getChildAt(root,i), output, msg);
-            if (i < 1)
-                strcat(output, getNodeValue(root));
-        }
-        strcat(output, ")");
-        return;
-    }
-
-    // UNARY
-    if ((getNodeChildrenSize(root) == 1) && ((getNodeType(root) == PLUS) || (getNodeType(root) == MINUS))) {
-        if (sprintf(temp, "(%s", getNodeValue(root)) < 0){
-            *msg = SP_TREE_ERROR_PRINT_FAILED;
-            return;
-        }
-        strcat(output, temp);
-        if ((getNodeType(getChildAt(root,0)) == NUMBER) || (getNodeType(getChildAt(root, 0)) == VARIABLE))
-            strcat(output, getNodeValue(getChildAt(root, 0)));
-        else
-            printTreeExpressionRec(getChildAt(root, 0), output, msg);
-        strcat(output, ")");
-        return;
-    }
-}
-
-*/
 void printHashMsgToOutput(HashResult msg, FILE* output) {
     switch(msg) {
         case SP_HASH_OUT_OF_MEMORY:
@@ -254,10 +139,12 @@ bool argsSanityCheck(int argc, char** argv, char* varFile, char* outFile) {
 bool assignOutput(char* fname, FILE** output) {
     if(!strcmp(fname, "")) { return true; }
     else {
-        if (!(*output = fopen(fname, "w"))) {
+        FILE *new_output = fopen(fname, "w");
+        if (new_output == NULL) {
             printf("Output file is read-only or cannot be created\n");
             return false;
         }
+        *output = new_output;
     }
     return true;
 }
@@ -302,15 +189,16 @@ bool argsHandler(int argc, char** argv, SPHash table, HashResult* msg, FILE** ou
 
 
 void printError() {
-    printf("Unexpected error occoured!\n");
+    printf("Unexpected error occured!\n");
+    assert(0);
 }
 
-bool floatIsInt(double a) {
+bool doubleIsInt(double a) {
     return a == ceil(a) || a == floor(a);
 }
 
 int compare (const void* a, const void* b) {
-    float delta = *(float*)a - *(float*)b;
+    double delta = *(double*)a - *(double*)b;
     if (delta > 0) { return 1; }
     else if (delta == 0) { return 0; }
     else { return -1; }
@@ -335,7 +223,7 @@ double generalBinaryCalc(double a, double b, Op op, bool* validResult) {
             }
         }
         case DOL: {
-            if (a <= b && floatIsInt(a) && floatIsInt(b)) {
+            if (a <= b && doubleIsInt(a) && doubleIsInt(b)) {
                 // by series sum formula
                 return ((b - a + 1) / 2) * (a + b);
             }
@@ -355,18 +243,6 @@ double generalBinaryCalc(double a, double b, Op op, bool* validResult) {
     }
     return NaN;
 }
-/*
-char opEnumToChar(Op op):{
-    switch (op) {
-        case ADD: return '+';
-        case SUB: return '-';
-        case MUL: return '*';
-        case DIV: return '/';
-        case DOL: return '$';
-        default:;
-    }
-    return NULL;
-}*/
 
 int atoiForSubstring(const char string[], size_t start, size_t end) {
     const size_t len = end - start + 1;
@@ -381,21 +257,3 @@ int atoiForSubstring(const char string[], size_t start, size_t end) {
     free(subString);
     return result;
 }
-/*
-void addParenthesisBinaryOpAndExpressionToOriginalExpression(char* src, Op op, char* exp) {
-    char buffer[MAX_LINE_LEN];
-    buffer[0] = '(';
-    buffer[1] = '\0';
-    strcat(exp, buffer);
-    //buffer[0] = '(';
-    //buffer[1] = '\0';
-    char opString[2];
-    opString[0] = opEnumToChar(op);
-    opString[1] = '\0';
-    strcat(op, buffer);
-    strcat(exp, buffer);
-    buffer[strlen(buffer)] = ')';
-    buffer[strlen(buffer)] = '\0';
-    strcpy(buffer, src);
-}
-*/

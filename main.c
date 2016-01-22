@@ -1,14 +1,13 @@
 #include "API.h"
 #include "SPHash.h"
 
-#define TERMINATION_LINE "(<>)\n"
+#define TERMINATION_LINE "(<>)"
 
 // decided not to implement getRootStr() and getChildAtIndex(),
 // as it requires redundant dynamic memory allocation,
 // while our design is based on constant strings and indices.
 
 int main(int argc, char* argv[]) {
-    bool validResult;
     SPHash hashTable = hashCreate();
     HashResult hashMsg;
     FILE* output = stdout;
@@ -16,7 +15,6 @@ int main(int argc, char* argv[]) {
         printError();
         exit(1);
     }
-    double res;
     char line[MAX_LINE_LEN + 1];
     if (!argsHandler(argc, argv, hashTable, &hashMsg, &output)){
         printHashMsgToOutput(hashMsg, output);
@@ -29,12 +27,14 @@ int main(int argc, char* argv[]) {
     }
 
     while (fgets(line, MAX_LINE_LEN, stdin) != NULL) {
+        printf("%s\n", line);
+        strtok(line, "\n"); // remove '\n' if we got one in string
         if (!strcmp(line, TERMINATION_LINE)) {
             if (output != stdout) { fprintf(output, "%s\n", TERMINATION_LINE); }
-            printf("Exiting...\n");
+            fprintf(output, "Exiting...\n");
             break;
         }
-        validResult = true;
+
         Node *tree = stringToTree(line);
         if (NULL == tree) {
             printError();
@@ -44,7 +44,8 @@ int main(int argc, char* argv[]) {
             printTreeExpression(tree, output);
             fprintf(output,"\n");
         }
-        res = calcTree(tree, hashTable, &validResult);
+        bool validResult = true;
+        double res = calcTree(tree, hashTable, &validResult);
         if (tree->type == TYPE_EQU) { // var assignment
             if (validResult) {
                 fprintf(output, "%s = %.2f\n", tree->val.var, res);
@@ -65,8 +66,6 @@ int main(int argc, char* argv[]) {
                 fprintf(output, "Invalid Result\n");
             }
         }
-        printf("adsf");
-        fflush(stdout);
         freeTree(tree);
     }
     if (output != stdout) {

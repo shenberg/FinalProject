@@ -60,20 +60,6 @@ Node* newEquNode(const char* var) {
     result->type = TYPE_EQU;
     return result;
 }
-/*
-void printTree(Node* tree, FILE* file) {
-    char result[MAX_LINE_LEN];
-    strcpy(result, "");
-    printNodeRec(Node* tree, result);
-    if (fprintf(file, "%s\n", result) != 0) {
-        exit(1);
-    }
-}
-void printNodeRec(Node* node, char* result) {
-    char temp[MAX_LINE_LEN];
-
-}
-*/
 
 Node* intSubStringToNode(char* line, size_t start, size_t end) {
     Node* result = newNumNode(atoiForSubstring(line, start + 1, end - 1));
@@ -82,12 +68,14 @@ Node* intSubStringToNode(char* line, size_t start, size_t end) {
 
 Node* varSubStringToNode(char* line, const size_t start, const size_t end) {
     char var[end - start];
-    strncpy(var, line + start + 1, end - start - 2);
-    var[end - start - 2] = '\0';
+    strncpy(var, line + start + 1, end - start - 1);
+    var[end - start - 1] = '\0';
+    printf("var name: %s\n", var);
     return newVarNode(var);
 }
 
 Node* opSubStringToNode(char* line, size_t start, size_t end) {
+    printf("opSubStringToNode(%p,%zu,%zu)\n", line, start, end);
     Op op;
     switch(line[start + 1]) {
         case '+': op = ADD; break;
@@ -118,6 +106,7 @@ Node* opSubStringToNode(char* line, size_t start, size_t end) {
             openedPars--;
             if (openedPars == 0) {
                 subEnd = current;
+                printf("going to sub-child: %zu-%zu (%zu-%zu)\n", subStart, subEnd, start, end);
                 // this function is safe: if mem alloc for chils fails,
                 // it frees the string and the tree from the root and then exit.
                 // new nodes can only be created as children of op nodes,
@@ -126,16 +115,17 @@ Node* opSubStringToNode(char* line, size_t start, size_t end) {
             }
         }
     }
+    assert(openedPars == 0);
     return result;
 }
 
 
 
 Node* generalSubStringToNode(char* line, size_t start, size_t end) {
-    if (line[0] != '(' || line[end-1] != ')') {
-        // not lisp tree?
-        return NULL;
-    }
+    printf("%zu-%zu, %d (%c), %s\n", start, end, line[end], line[end], line);
+    // not lisp tree?
+    assert (line[0] == '(' && line[end] == ')');
+
     char c = line[start + 1];
     if (c >= '0' && c <= '9') {
         return intSubStringToNode(line, start, end);
@@ -153,7 +143,7 @@ Node* generalSubStringToNode(char* line, size_t start, size_t end) {
         memset(varName, '\0', sizeof(varName));
         strncpy(varName, line + 3, endOfVarPar - 3); // get the var name
         Node* result = newEquNode(varName);
-        result->children[0] = generalSubStringToNode(line, endOfVarPar + 1, end);
+        result->children[0] = generalSubStringToNode(line, endOfVarPar + 1, end-1);
         result->numOfSons = 1;
         return result;
     }

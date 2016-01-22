@@ -10,3 +10,10 @@ SP/SPCalculatorLexer.tokens
 *.o
 
 *.class
+
+tests/
+
+*.out
+
+
+SPCalculator
