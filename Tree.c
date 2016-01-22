@@ -61,6 +61,10 @@ Node* newEquNode(const char* var) {
     return result;
 }
 
+//////////////// Tree construction from string ///////////////////////
+
+Node* generalSubStringToNode(char* line, size_t start, size_t end);
+
 Node* intSubStringToNode(char* line, size_t start, size_t end) {
     Node* result = newNumNode(atoiForSubstring(line, start + 1, end - 1));
     return result;
@@ -73,6 +77,14 @@ Node* varSubStringToNode(char* line, const size_t start, const size_t end) {
     printf("var name: %s\n", var);
     return newVarNode(var);
 }
+
+void attachNewChildToParentBySubstring(Node* parent, char* line, size_t start, size_t end) {
+    Node* child = generalSubStringToNode(line, start, end);
+    parent->children[parent->numOfSons] = child;
+    parent->numOfSons++;
+
+}
+
 
 Node* opSubStringToNode(char* line, size_t start, size_t end) {
     printf("opSubStringToNode(%p,%zu,%zu)\n", line, start, end);
@@ -152,12 +164,6 @@ Node* generalSubStringToNode(char* line, size_t start, size_t end) {
     }
 }
 
-void attachNewChildToParentBySubstring(Node* parent, char* line, size_t start, size_t end) {
-    Node* child = generalSubStringToNode(line, start, end);
-    parent->children[parent->numOfSons] = child;
-    parent->numOfSons++;
-
-}
 
 Node* stringToTree(char* line) {
     Node* result = generalSubStringToNode(line, 0, strlen(line) - 1);
