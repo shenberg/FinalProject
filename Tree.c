@@ -195,11 +195,9 @@ double calcTree(Node* tree, SPHash hash, bool* status) {
         if (tree->numOfSons == 1) { // unary minus/plus
             if (op == SUB) {
                 result = -calcTree(tree->children[0], hash, status);
-            } else if (op == ADD) {
+            } else { // add, or single-param min/max/avg/med
                 result = calcTree(tree->children[0], hash, status);
-            } else {
-                assert(0); //TODO
-            }
+            } 
         }
         else if (op == MED) {
             double* doublesForMedian = (double*)malloc(tree->numOfSons * sizeof(double));
