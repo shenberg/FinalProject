@@ -5,6 +5,9 @@
 #ifndef SP_EX3_TREE_H
 #define SP_EX3_TREE_H
 
+#include "API.h"
+#include "SPHash.h"
+
 #define MAX_SONS 10
 
 typedef enum {
@@ -21,18 +24,21 @@ typedef union {
     char var[MAX_LINE_LEN];
 } Node_Value;
 
-typedef struct Node_t Node;
+typedef struct Node_t {
+    Node_Type type;
+    Node_Value val;
+    int numOfSons;
+    bool valid;
+    struct Node_t* children[MAX_SONS];
+} Node;
 
 
-Node* newNode();
-Node* newIntNode(const int num);
-Node* newOpNode(const Op op);
 Node* intSubStringToNode(char* line, size_t start, size_t end);
 Node* varSubStringToNode(char* line, const size_t start, const size_t end);
 Node* opSubStringToNode(char* line, size_t start, size_t end);
 Node* generalSubStringToNode(char* line, size_t start, size_t end);
 Node* stringToTree(char* line);
-double calcTree(Node* tree, bool* status);
+double calcTree(Node* tree, SPHash hash, bool* status);
 void freeTree(Node* tree);
 void attachNewChildToParentBySubstring(Node* parent, char* line, size_t start, size_t end);
 

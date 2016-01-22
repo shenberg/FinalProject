@@ -3,7 +3,7 @@
 #include "SPList.h"
 #include <stdlib.h>
 #include <assert.h>
-
+#include <stdio.h>
 
 /* code from docs to hash a string */
 #define NUM_ENTRIES 100
@@ -15,7 +15,7 @@ int hashKey(const char *key) {
 		return -1;
 	} else {
 		int result = PRIME1;
-		for(const char *p = key; p; p++) {
+		for(const char *p = key; *p; p++) {
 			result = result*PRIME2 + (int)*p;
 			result %= NUM_ENTRIES;
 		}
@@ -112,7 +112,7 @@ bool hashInsert(SPHash hash, char *key, double value, HashResult *error) {
 			/* match found - replace value */
 			setELementValue(e, value);
 			SET_ERROR(SP_HASH_OK);
-			return false;
+			return true;
 		}
 	}
 	/* match not found, insert new item */

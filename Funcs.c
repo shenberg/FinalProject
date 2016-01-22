@@ -3,18 +3,120 @@
 //
 
 #include "API.h"
+#include <assert.h>
 
-int printExpressionToOutput(Node* root, FILE* output, bool* valid){
-    char stringToPrint[MAX_LINE_LENGTH * 2 + 1];
+#define DELS " \t\r\n="
+
+// convert function operators to function names
+// return NULL for regular operators;
+const char *opToFunc(Op op) {
+    switch (op) {
+    case MIN:
+        return "min";
+    case MAX:
+        return "max";
+    case MED:
+        return "median";
+    case AVG:
+        return "average";
+    default:
+        return NULL;
+    }
+}
+
+// regular operator -> type to string
+const char *opToStr(Op op) {
+    switch(op) {
+    case ADD:
+        return "+";
+    case SUB:
+        return "-";
+    case MUL:
+        return "*";
+    case DIV:
+        return "/";
+    case DOL:
+        return "$";
+    default:
+        return NULL;
+    }
+}
+void printInnerExpression(Node *node, FILE *output) {
+    if (node->type == TYPE_NUM) {
+        fprintf(output, "%.2f", node->val.num);
+    } else if (node->type == TYPE_VAR) {
+        fprintf(output, "%s", node->val.var);
+    } else {
+        printTreeExpression(node, output);
+    }    
+}
+
+void printTreeExpression(Node *node, FILE *output) {
+    const char *funcName;
+    fprintf(output, "(");
+    switch(node->type) {
+    case TYPE_NUM:
+        fprintf(output, "%.2f", node->val.num);
+        break;
+    case TYPE_VAR:
+        fprintf(output, "%s", node->val.var);
+        break;
+    case TYPE_OP:
+        funcName = opToFunc(node->val.op);
+        if (funcName != NULL) {
+            // handle function calls
+            fprintf(output, "%s(", funcName);
+            for (int i = 0; i < node->numOfSons; i++) {
+                if (i > 0) {
+                    fprintf(output, ",");
+                }
+                Node *child = node->children[i];
+                printInnerExpression(child, output);
+            }
+            fprintf(output, ")");
+        } else if (node->numOfSons == 1) {
+            // unary op
+            switch(node->val.op) {
+                case ADD:
+                    fprintf(output,"+");
+                    break;
+                case SUB:
+                    fprintf(output,"-");
+                    break;
+                default:
+                    // only +/- can be unary!
+                    assert(0);
+            }
+            printInnerExpression(node->children[0], output);
+        } else {
+            // binary op 
+            assert(node->numOfSons == 2);
+            printInnerExpression(node->children[0], output);
+            const char *opStr = opToStr(node->val.op);
+            assert(opStr != NULL);
+            fprintf(output, "%s", opStr);
+            printInnerExpression(node->children[1], output);
+        }
+        break;
+    case TYPE_EQU:
+        assert(node->numOfSons == 1);
+        fprintf(output, "%s=", node->val.var);
+        printInnerExpression(node->children[0], output);
+    }
+    fprintf(output, ")");
+}
+/*
+int printExpressionToOutput(Node* root, FILE* output){
+    char stringToPrint[MAX_LINE_LEN * 2 + 1];
     strcpy(outputString, "");
     printExpressionToOutputRec(root, outputString, valid);
     if (!valid) { return -1; }
     return fprintf(output, "%s\n", outputString);
 }
 
-void printExpressionToOutputRec(Node* root, char* output, bool* valid) {
+void printExpressionToOutputRec(Node* root, char* output) {
     size_t i;
-    char temp[MAX_LINE_LENGTH + 1];
+    char temp[MAX_LINE_LEN + 1];
 
     // if there was an error, do nothing
     if (!valid || !root)
@@ -25,8 +127,8 @@ void printExpressionToOutputRec(Node* root, char* output, bool* valid) {
 
     // NUMBER / VAR
 
-    if (root->Node_Type == NUM) {
-        if (sprintf(temp, "(%f)", root->val.num) < 0) {
+    if (root->Node_Type == TYPE_NUM) {
+        if (sprintf(temp, "(%.2f)", root->val.num) < 0) {
             *valid = false;
             return;
         }
@@ -110,7 +212,7 @@ void printExpressionToOutputRec(Node* root, char* output, bool* valid) {
     }
 }
 
-
+*/
 void printHashMsgToOutput(HashResult msg, FILE* output) {
     switch(msg) {
         case SP_HASH_OUT_OF_MEMORY:
@@ -125,20 +227,7 @@ void printHashMsgToOutput(HashResult msg, FILE* output) {
 }
 
 
-bool argsHandler(int argc, char** argv, SPHash* table, HashResult* msg, FILE** output){
-    char varFile[MAX_LINE_LEN] = "";
-    char outFile[MAX_LINE_LEN] = "";
-
-    if (!argsSanityCheck(argc, argv, varFile, outFile)
-        || !assignOutput(out_fname, output)
-        || !insertVarsFromFileToHashTable(var_fname, table, msg)
-        || *msg != SP_HASH_OK) {
-        return false;
-    }
-    return true;
-}
-
-bool argsSanityCheck(int argc, char** argv, char* var_file, char* out_file) {
+bool argsSanityCheck(int argc, char** argv, char* varFile, char* outFile) {
     if (argc == 1) { return true; } // no args
     else {
         int i;
@@ -147,14 +236,14 @@ bool argsSanityCheck(int argc, char** argv, char* var_file, char* out_file) {
             return false;
         }
         for (i = 1; i < argc; i += 2) {
-            if (!strcmp(argv[i], "-v") && !strcmp(var_file, "")) {
-                strcpy(var_file, argv[i + 1]);
+            if (!strcmp(argv[i], "-v") && !strcmp(varFile, "")) {
+                strcpy(varFile, argv[i + 1]);
             }
-            else if (!strcmp(argv[i], "-o") && !strcmp(out_file, "")) {
-                strcpy(out_file, argv[i + 1]);
+            else if (!strcmp(argv[i], "-o") && !strcmp(outFile, "")) {
+                strcpy(outFile, argv[i + 1]);
             }
         }
-        if (var_file && out_file && !strcmp(var_file, out_file)) {
+        if (varFile && outFile && !strcmp(varFile, outFile)) {
             printf("Files must be different\n");
             return false;
         }
@@ -174,7 +263,7 @@ bool assignOutput(char* fname, FILE** output) {
 }
 
 
-bool insertVarsFromFileToHashTable(char* fname, SPHash* hashTable, HashResult* msg) {
+bool insertVarsFromFileToHashTable(char* fname, SPHash hashTable, HashResult* msg) {
     char line[MAX_LINE_LEN];
     char* currentVar;
     char* currentVal;
@@ -185,15 +274,31 @@ bool insertVarsFromFileToHashTable(char* fname, SPHash* hashTable, HashResult* m
         return false;
     }
     while (fgets(line, sizeof(line), varFile)) {
-        currentVar = strtok(line, DELS2);
-        currentVal = strtok(NULL, DELS2);
-        if (!hashInsert(hashTable, var, atof(val), msg)) {
+        currentVar = strtok(line, DELS);
+        currentVal = strtok(NULL, DELS);
+        if (!hashInsert(hashTable, currentVar, atof(currentVal), msg)) {
+            printError();
             return false;
         }
     }
     fclose(varFile);
     return true;
 }
+
+
+bool argsHandler(int argc, char** argv, SPHash table, HashResult* msg, FILE** output){
+    char varFile[MAX_LINE_LEN] = "";
+    char outFile[MAX_LINE_LEN] = "";
+
+    if (!argsSanityCheck(argc, argv, varFile, outFile)
+        || !assignOutput(outFile, output)
+        || !insertVarsFromFileToHashTable(varFile, table, msg)
+        || *msg != SP_HASH_OK) {
+        return false;
+    }
+    return true;
+}
+
 
 
 void printError() {
@@ -212,6 +317,7 @@ int compare (const void* a, const void* b) {
 }
 
 double generalBinaryCalc(double a, double b, Op op, bool* validResult) {
+    *validResult = true;
     switch (op) {
         case ADD:
             return a + b;
@@ -229,7 +335,7 @@ double generalBinaryCalc(double a, double b, Op op, bool* validResult) {
             }
         }
         case DOL: {
-            if (a <= b && double(a) && double(b)) {
+            if (a <= b && floatIsInt(a) && floatIsInt(b)) {
                 // by series sum formula
                 return ((b - a + 1) / 2) * (a + b);
             }
@@ -242,14 +348,14 @@ double generalBinaryCalc(double a, double b, Op op, bool* validResult) {
             return (a < b ? a : b);
         case MAX:
             return (a < b ? b : a);
-        case MED:; // should never reach here, not binary op, handled in calcTree()
-        case AVG:; // should never reach here, not binary op, handled in calcTree()
-        case INVALID:; // should only reach here for unrecognized variable
+        case MED: // should never reach here, not binary op, handled in calcTree()
+        case AVG: // should never reach here, not binary op, handled in calcTree()
+        case INVALID: // should only reach here for unrecognized variable
         default: *validResult = false;
     }
     return NaN;
 }
-
+/*
 char opEnumToChar(Op op):{
     switch (op) {
         case ADD: return '+';
@@ -260,7 +366,7 @@ char opEnumToChar(Op op):{
         default:;
     }
     return NULL;
-}
+}*/
 
 int atoiForSubstring(const char string[], size_t start, size_t end) {
     const size_t len = end - start + 1;
@@ -275,7 +381,7 @@ int atoiForSubstring(const char string[], size_t start, size_t end) {
     free(subString);
     return result;
 }
-
+/*
 void addParenthesisBinaryOpAndExpressionToOriginalExpression(char* src, Op op, char* exp) {
     char buffer[MAX_LINE_LEN];
     buffer[0] = '(';
@@ -287,8 +393,9 @@ void addParenthesisBinaryOpAndExpressionToOriginalExpression(char* src, Op op, c
     opString[0] = opEnumToChar(op);
     opString[1] = '\0';
     strcat(op, buffer);
-    strcar(exp, buffer);
+    strcat(exp, buffer);
     buffer[strlen(buffer)] = ')';
     buffer[strlen(buffer)] = '\0';
     strcpy(buffer, src);
 }
+*/

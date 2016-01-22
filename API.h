@@ -11,18 +11,11 @@
 #include <math.h>
 #include <stdbool.h>
 
+#define NaN -1
+#define MAX_LINE_LEN 1024
+
 #include "Funcs.h"
 #include "Tree.h"
 
-#define NaN -1
-#define MAX_LINE_LEN 1024
-#define TERMINATION_LINE "(<>)\n"
-
-#define MIN_CHAR '?'
-#define MAX_CHAR '!'
-#define MED_CHAR '@'
-#define AVG_CHAR '%'
-#define DELS " \t\r\n"
-#define DELS2 " \t\r\n="
 
 #endif //SP_EX4_API_H

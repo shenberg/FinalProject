@@ -1,7 +1,7 @@
 all: 
 	cd SP; make all
 	$(MAKE) SPCalculator
-SPCalculator: main.o Tree.o Funcs.o SPHash.o SPList.o SPListElement.o #Extends dependency list
+SPCalculator: main.o Tree.o Funcs.o SPHash.o SPList.o SPListElement.o
 	gcc -std=c99 -Wall -Werror -pedantic-errors main.o Tree.o Funcs.o SPHash.o SPList.o SPListElement.o -o SPCalculator
 
 SPList.o: SPList.c SPList.h SPListElement.h
@@ -22,9 +22,7 @@ Tree.o: Tree.c API.h
 main.o: main.c API.h
 	gcc -std=c99 -Wall -Werror -pedantic-errors -c main.c
 
-
-
 clean:
 	cd SP; make clean
 	rm -fr *.o #Extend to remove other object files you created.
-	
+	rm -f SPCalculator

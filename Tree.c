@@ -4,14 +4,13 @@
 
 #include "API.h"
 #include "Tree.h"
+#include "SPHash.h"
+#include <assert.h>
 
-
-typedef struct Node_t {
-    Node_Type type;
-    Node_Value val;
-    int numOfSons;
-    struct Node_t* children[MAX_SONS];
-} Node;
+#define MIN_CHAR '?'
+#define MAX_CHAR '!'
+#define MED_CHAR '@'
+#define AVG_CHAR '%'
 
 void freeTree(Node* tree) {
     if (tree == NULL) {
@@ -37,31 +36,31 @@ Node* newNode() {
 
 Node* newNumNode(const double num) {
     Node* result = newNode();
-    result->Node_Type = NUM;
+    result->type = TYPE_NUM;
     result->val.num = num;
     return result;
 }
 
 Node* newOpNode(const Op op) {
     Node* result = newNode();
-    result->Node_Type = OP;
+    result->type = TYPE_OP;
     result->val.op = op;
     return result;
 }
 
 Node* newVarNode(const char* var) {
     Node* result = newNode();
-    result->Node_Type = VAR;
+    result->type = TYPE_VAR;
     strcpy(result->val.var, var);
     return result;
 }
 
 Node* newEquNode(const char* var) {
     Node* result = newVarNode(var);
-    result->Node_Type = EQU;
+    result->type = TYPE_EQU;
     return result;
 }
-
+/*
 void printTree(Node* tree, FILE* file) {
     char result[MAX_LINE_LEN];
     strcpy(result, "");
@@ -74,8 +73,7 @@ void printNodeRec(Node* node, char* result) {
     char temp[MAX_LINE_LEN];
 
 }
-
-
+*/
 
 Node* intSubStringToNode(char* line, size_t start, size_t end) {
     Node* result = newNumNode(atoiForSubstring(line, start + 1, end - 1));
@@ -84,21 +82,9 @@ Node* intSubStringToNode(char* line, size_t start, size_t end) {
 
 Node* varSubStringToNode(char* line, const size_t start, const size_t end) {
     char var[end - start];
-    strncpy(var, line + start + 1, end - start - 1);
-    var[end - start - 1] = '\0';
-    if (hashIsEmpty() || !hashContains(var)) {
-        Node *result = newOpNode(INVALID);
-        // mark as invalid tree. when calculating the tree,
-        // this leaf will be a "witness" that the tree is infected
-        // and the calculation will return "invalid result"
-        return result;
-    }
-    else {
-        double* valueFromHash = hashGetValue(var);
-        Node *result = newIntNode(*valueFromHash); // assuming hashGetValue(var) is double*
-        free(valueFromHash);
-        return result;
-    }
+    strncpy(var, line + start + 1, end - start - 2);
+    var[end - start - 2] = '\0';
+    return newVarNode(var);
 }
 
 Node* opSubStringToNode(char* line, size_t start, size_t end) {
@@ -146,25 +132,29 @@ Node* opSubStringToNode(char* line, size_t start, size_t end) {
 
 
 Node* generalSubStringToNode(char* line, size_t start, size_t end) {
+    if (line[0] != '(' || line[end-1] != ')') {
+        // not lisp tree?
+        return NULL;
+    }
     char c = line[start + 1];
     if (c >= '0' && c <= '9') {
         return intSubStringToNode(line, start, end);
     }
-    else if (c >= 'A' && c <= 'z') {
+    else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
         return varSubStringToNode(line, start, end);
     }
     else if (c == '=') {
+        // always of the form (=<var><expression>)
+        // so line[1] == '=', line[2]=='(', then scan till first ')'
+        // to find var name
         size_t endOfVarPar;
         for (endOfVarPar = 2; line[endOfVarPar] != ')'; endOfVarPar++);
         char varName[MAX_LINE_LEN];
         memset(varName, '\0', sizeof(varName));
-        strncpy(varName, line + 1, endOfVarPar - 3); // get the var name
+        strncpy(varName, line + 3, endOfVarPar - 3); // get the var name
         Node* result = newEquNode(varName);
         result->children[0] = generalSubStringToNode(line, endOfVarPar + 1, end);
         result->numOfSons = 1;
-        bool valid = true;
-        double varTreeValue = calcTree(result->children[0], &valid);
-        hashInsert(hash, varName, varTreeValue);
         return result;
     }
     else {
@@ -180,47 +170,46 @@ void attachNewChildToParentBySubstring(Node* parent, char* line, size_t start, s
 }
 
 Node* stringToTree(char* line) {
-    // first we replace operators strings with chars
-    // for example (min(1)(2)) => (?(1)(2))
-    //  this promises us that every alphabetic char is a part of a variable name
-    char newline[MAX_LINE_LEN];
-    size_t i, j;
-    size_t original_len = strlen(line) + 1; // length including the '\0'
-    for (i = 0, j = 0; i < original_len; i++, j++) {
-        if ((original_len - i) >= 3 && strncmp(line + i, "min", 3)) {
-            newline[j] = MIN_CHAR;
-            i += 2;
-        }
-        else if ((original_len - i) >= 3 && strncmp(line + i, "max", 3)) {
-            newline[j] = MAX_CHAR;
-            i += 2;
-        }
-        else if ((original_len - i) >= 6 && strncmp(line + i, "median", 6)) {
-            newline[j] = MED_CHAR;
-            i += 5;
-        }
-        else if ((original_len - i) >= 7 && strncmp(line + i, "average", 7)) {
-            newline[j] = AVG_CHAR;
-            i += 6;
-        }
-        else {
-            newline[j] = line[i];
-        }
-    }
-    Node* result = generalSubStringToNode(newline, 0, strlen(line) - 1);
+    Node* result = generalSubStringToNode(line, 0, strlen(line) - 1);
     return result;
 }
 
-double calcTree(Node* tree, bool* status) {
-    if (tree->isNum) {
+double calcTree(Node* tree, SPHash hash, bool* status) {
+    enum HashResult_t error;
+    double result = 0;
+    double *hashValue;
+    int i;
+    Op op;
+    switch (tree->type) {
+    case TYPE_NUM:
+        *status = true;
         return tree->val.num;
-    }
-    else { // node is op
-        double result;
-        int i;
-        Op op = tree->val.op;
-        if (op == SUB && tree->numOfSons == 1) { // unary minus ?
-            result = -calcTree(tree->children[0], status);
+    case TYPE_VAR:
+        //printf("getting hash for var %s\n", t)
+        hashValue = hashGetValue(hash, tree->val.var, &error);
+        if (error == SP_HASH_OUT_OF_MEMORY) {
+            printError();
+            exit(1);
+        } else if (hashValue == NULL) {
+            // variable doesn't exist
+            *status = false;
+            return 0;
+        }
+        result = *hashValue;
+        free(hashValue);
+        *status = true;
+        return result;
+    case TYPE_OP:
+        op = tree->val.op;
+        assert(tree->numOfSons > 0);
+        if (tree->numOfSons == 1) { // unary minus/plus
+            if (op == SUB) {
+                result = -calcTree(tree->children[0], hash, status);
+            } else if (op == ADD) {
+                result = calcTree(tree->children[0], hash, status);
+            } else {
+                assert(0); //TODO
+            }
         }
         else if (op == MED) {
             double* doublesForMedian = (double*)malloc(tree->numOfSons * sizeof(double));
@@ -229,33 +218,51 @@ double calcTree(Node* tree, bool* status) {
                 exit(1);
             }
             for (i = 0; i < tree->numOfSons; i++) {
-                doublesForMedian[i] = calcTree(tree->children[i], status);
+                doublesForMedian[i] = calcTree(tree->children[i], hash, status);
+                if (!*status) {
+                    break;
+                }
             }
-            qsort(doublesForMedian, (size_t)(tree->numOfSons), sizeof(double), compare);
-            if (tree->numOfSons % 2 == 1) { // odd number of sons, greather than 0
-                result = doublesForMedian[(tree->numOfSons - 1) / 2];
-            }
-            else { // even number of sons, greater than 0
-                result = (doublesForMedian[(tree->numOfSons / 2)] + doublesForMedian[(tree->numOfSons / 2) - 1]) / 2;
+            if (*status) {
+                qsort(doublesForMedian, (size_t)(tree->numOfSons), sizeof(double), compare);
+                if (tree->numOfSons % 2 == 1) { // odd number of sons, greather than 0
+                    result = doublesForMedian[(tree->numOfSons - 1) / 2];
+                }
+                else { // even number of sons, greater than 0
+                    result = (doublesForMedian[(tree->numOfSons / 2)] + doublesForMedian[(tree->numOfSons / 2) - 1]) / 2;
+                }
             }
             free(doublesForMedian);
         }
         else if (op == AVG) {
             result = 0;
-            for (i = 0; i < tree->numOfSons; i++) {
-                result += calcTree(tree->children[i], status);
+            *status = true;
+            for (i = 0; i < tree->numOfSons && status; i++) {
+                result += calcTree(tree->children[i], hash, status);
             }
-            result /= tree->numOfSons;
+            if (*status) {
+                result /= tree->numOfSons;
+            }
         }
         else {
-            result = calcTree(tree->children[0], status); // assuming operator has at least one operand!
-            for (i = 1; i < tree->numOfSons; i++) {
-                result = generalBinaryCalc(result, calcTree(tree->children[i], status), op, status);
+            result = calcTree(tree->children[0], hash, status); // assuming operator has at least one operand!
+
+            for (i = 1; i < tree->numOfSons && *status; i++) {
+                double parameter = calcTree(tree->children[i], hash, status);
+                if (!*status) {
+                    break;
+                }
+                result = generalBinaryCalc(result, parameter, op, status);
             }
         }
         return (result != 0 ? result : 0);
         // result may be erroneous. That's why we carry the status flag
         // -0 turns to +0
+    case TYPE_EQU:
+        assert(tree->numOfSons == 1);
+        return calcTree(tree->children[0], hash, status);
+    default:
+        assert(0);
     }
 }
 

@@ -1,6 +1,8 @@
 #include "API.h"
 #include "SPHash.h"
 
+#define TERMINATION_LINE "(<>)\n"
+
 // decided not to implement getRootStr() and getChildAtIndex(),
 // as it requires redundant dynamic memory allocation,
 // while our design is based on constant strings and indices.
@@ -8,13 +10,12 @@
 int main(int argc, char* argv[]) {
     bool validResult;
     SPHash hashTable = hashCreate();
+    HashResult hashMsg;
     FILE* output = stdout;
-    char* exp;
     if(hashTable == NULL) {
         printError();
         exit(1);
     }
-    Node* tree = NULL;
     double res;
     char line[MAX_LINE_LEN + 1];
     if (!argsHandler(argc, argv, hashTable, &hashMsg, &output)){
@@ -28,40 +29,50 @@ int main(int argc, char* argv[]) {
     }
 
     while (fgets(line, MAX_LINE_LEN, stdin) != NULL) {
-        exp = strtok(line, DELS);
-        if (expression == NULL) {
-            fprintf(output, "Invalid Result\n");
-            continue;
-        }
         if (!strcmp(line, TERMINATION_LINE)) {
             if (output != stdout) { fprintf(output, "%s\n", TERMINATION_LINE); }
             printf("Exiting...\n");
             break;
         }
         validResult = true;
-        //Node* tree = newNode();
-        if (!tree) {
-            fprintf(output, "Unexpected error occurred!\n");
-            break;
+        Node *tree = stringToTree(line);
+        if (NULL == tree) {
+            printError();
+            exit(1);
         }
-        tree = stringToTree(line);
-        if (tree->Node_Type == VAR) { // var assignment
-            res = calcTree(tree->children[0], &validResult);
+        if (output != stdout || true) { //TODO!
+            printTreeExpression(tree, output);
+            fprintf(output,"\n");
+        }
+        res = calcTree(tree, hashTable, &validResult);
+        if (tree->type == TYPE_EQU) { // var assignment
             if (validResult) {
-                printf("%s = %.2f\n", tree->val.var, res);
+                fprintf(output, "%s = %.2f\n", tree->val.var, res);
+                // successful assignment, store result
+                if (!hashInsert(hashTable, tree->val.var, res, NULL)) {
+                    // hashTable != NULL so we're out of memory on failure
+                    printError();
+                    exit(1);
+                }
+            } else {
+                fprintf(output, "Invalid Assignment\n");
             }
         }
         else { // not var assignment
-            res = calcTree(tree, &validResult);
             if (validResult) {
-                printf("%s = %.2f\n", tree->val.var, res);
+                fprintf(output, "res = %.2f\n", res);
+            } else {
+                fprintf(output, "Invalid Result\n");
             }
         }
+        printf("adsf");
+        fflush(stdout);
         freeTree(tree);
-        if (!validResult) {
-            printf("Invalid Result\n");
-        }
     }
+    if (output != stdout) {
+        fclose(output);
+    }
+    hashDestroy(hashTable);
     // exit() clears all dynamic memory so no need to free(),
     // as told by Moab
     exit(EXIT_SUCCESS);

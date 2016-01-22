@@ -37,6 +37,9 @@ void hashDestroy(SPHash hash);
 /**
  * hashGetValue: Get a value got a key from the hash-table
  *
+ * Errors: SP_HASH_NULL_ARGUMENT if hash==NULL,
+ *         SP_HASH_OUT_OF_MEMORY on copy allocation failure
+ *
  * @param hash hashtable to read from
  * @param key the key to look up
  * @param error out param, operation status. Can be NULL if don't care
@@ -50,13 +53,18 @@ double *hashGetValue(SPHash hash, char *key, HashResult *error);
  * hashInsert: insert a key->value mapping to the hash-table. If key already
  * maps to old_value, make it map to value instead.
  *
+ * Errors: SP_HASH_NULL_ARGUMENT if hash==NULL,
+ *         SP_HASH_OUT_OF_MEMORY on internal allocation failure
+ *
  * @param hash hashtable to read from
  * @param key the key
  * @param value the value
  * @param error out param, operation status. Can be NULL if don't care
  *
- * @return true if key was added to hash-table (meaning hash table did not 
- *         contain the key already), false otherwise
+ * @return true if key set successfully, false otherwise (look at error
+ *         for cause)
+ * 
+ *
  */
 bool hashInsert(SPHash hash, char *key, double value, HashResult *error);
 
