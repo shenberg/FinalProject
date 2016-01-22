@@ -22,5 +22,7 @@
 #define MAX_CHAR '!'
 #define MED_CHAR '@'
 #define AVG_CHAR '%'
+#define DELS " \t\r\n"
+#define DELS2 " \t\r\n="
 
 #endif //SP_EX3_API_H

@@ -27,22 +27,50 @@ Node* newNode() {
     return node;
 }
 
-Node* newIntNode(const int num) {
+Node* newNumNode(const double num) {
     Node* result = newNode();
-    result->isNum = true;
+    result->Node_Type = NUM;
     result->val.num = num;
     return result;
 }
 
 Node* newOpNode(const Op op) {
     Node* result = newNode();
-    result->isNum = false;
+    result->Node_Type = OP;
     result->val.op = op;
     return result;
 }
 
+Node* newVarNode(const char* var) {
+    Node* result = newNode();
+    result->Node_Type = VAR;
+    strcpy(result->val.var, var);
+    return result;
+}
+
+Node* newEquNode(const char* var) {
+    Node* result = newVarNode(var);
+    result->Node_Type = EQU;
+    return result;
+}
+
+void printTree(Node* tree, FILE* file) {
+    char result[MAX_LINE_LEN];
+    strcpy(result, "");
+    printNodeRec(Node* tree, result);
+    if (fprintf(file, "%s\n", result) != 0) {
+        exit(1);
+    }
+}
+void printNodeRec(Node* node, char* result) {
+    char temp[MAX_LINE_LEN];
+
+}
+
+
+
 Node* intSubStringToNode(char* line, size_t start, size_t end) {
-    Node* result = newIntNode(atoiForSubstring(line, start + 1, end - 1));
+    Node* result = newNumNode(atoiForSubstring(line, start + 1, end - 1));
     return result;
 }
 
@@ -58,7 +86,9 @@ Node* varSubStringToNode(char* line, const size_t start, const size_t end) {
         return result;
     }
     else {
-        Node *result = newIntNode(*hashGetValue(var)); // assuming hashGetValue(var) is int*
+        double* valueFromHash = hashGetValue(var);
+        Node *result = newIntNode(*valueFromHash); // assuming hashGetValue(var) is double*
+        free(valueFromHash);
         return result;
     }
 }
@@ -115,6 +145,20 @@ Node* generalSubStringToNode(char* line, size_t start, size_t end) {
     else if (c >= 'A' && c <= 'z') {
         return varSubStringToNode(line, start, end);
     }
+    else if (c == '=') {
+        size_t endOfVarPar;
+        for (endOfVarPar = 2; line[endOfVarPar] != ')'; endOfVarPar++);
+        char varName[MAX_LINE_LEN];
+        memset(varName, '\0', sizeof(varName));
+        strncpy(varName, line + 1, endOfVarPar - 3); // get the var name
+        Node* result = newEquNode(varName);
+        result->children[0] = generalSubStringToNode(line, endOfVarPar + 1, end);
+        result->numOfSons = 1;
+        bool valid = true;
+        double varTreeValue = calcTree(result->children[0], &valid);
+        hashInsert(hash, varName, varTreeValue);
+        return result;
+    }
     else {
         return opSubStringToNode(line, start, end);
     }
@@ -159,34 +203,34 @@ Node* stringToTree(char* line) {
     return result;
 }
 
-float calcTree(Node* tree, bool* status) {
+double calcTree(Node* tree, bool* status) {
     if (tree->isNum) {
         return tree->val.num;
     }
     else { // node is op
-        float result;
+        double result;
         int i;
         Op op = tree->val.op;
         if (op == SUB && tree->numOfSons == 1) { // unary minus ?
             result = -calcTree(tree->children[0], status);
         }
         else if (op == MED) {
-            float* floatsForMedian = (float*)malloc(tree->numOfSons * sizeof(float));
-            if (floatsForMedian == NULL) {
+            double* doublesForMedian = (double*)malloc(tree->numOfSons * sizeof(double));
+            if (doublesForMedian == NULL) {
                 printError();
                 exit(1);
             }
             for (i = 0; i < tree->numOfSons; i++) {
-                floatsForMedian[i] = calcTree(tree->children[i], status);
+                doublesForMedian[i] = calcTree(tree->children[i], status);
             }
-            qsort(floatsForMedian, (size_t)(tree->numOfSons), sizeof(float), compare);
+            qsort(doublesForMedian, (size_t)(tree->numOfSons), sizeof(double), compare);
             if (tree->numOfSons % 2 == 1) { // odd number of sons, greather than 0
-                result = floatsForMedian[(tree->numOfSons - 1) / 2];
+                result = doublesForMedian[(tree->numOfSons - 1) / 2];
             }
             else { // even number of sons, greater than 0
-                result = (floatsForMedian[(tree->numOfSons / 2)] + floatsForMedian[(tree->numOfSons / 2) - 1]) / 2;
+                result = (doublesForMedian[(tree->numOfSons / 2)] + doublesForMedian[(tree->numOfSons / 2) - 1]) / 2;
             }
-            free(floatsForMedian);
+            free(doublesForMedian);
         }
         else if (op == AVG) {
             result = 0;

@@ -8,17 +8,22 @@
 #define MAX_SONS 10
 
 typedef enum {
-    INVALID, ADD, SUB, MUL, DIV, DOL, MIN, MAX, MED, AVG,
+    INVALID, EQU, ADD, SUB, MUL, DIV, DOL, MIN, MAX, MED, AVG,
 } Op;
+
+typedef enum {
+    OP, NUM, VAR, EQU,
+} Node_Type;
 
 typedef union {
     Op op;
-    int num;
+    double num;
+    char var[MAX_LINE_LEN];
 } Node_Value;
 
 typedef struct Node_t {
     //Node_Value val
-    bool isNum;
+    Node_Type;
     Node_Value val;
     int numOfSons;
     struct Node_t* children[MAX_SONS];
@@ -33,7 +38,7 @@ Node* varSubStringToNode(char* line, const size_t start, const size_t end);
 Node* opSubStringToNode(char* line, size_t start, size_t end);
 Node* generalSubStringToNode(char* line, size_t start, size_t end);
 Node* stringToTree(char* line);
-float calcTree(Node* tree, bool* status);
+double calcTree(Node* tree, bool* status);
 void freeTree(Node* tree);
 void attachNewChildToParentBySubstring(Node* parent, char* line, size_t start, size_t end);
 
