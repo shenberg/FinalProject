@@ -4,6 +4,113 @@
 
 #include "API.h"
 
+int printExpressionToOutput(Node* root, FILE* output, bool* valid){
+    char stringToPrint[MAX_LINE_LENGTH * 2 + 1];
+    strcpy(outputString, "");
+    printExpressionToOutputRec(root, outputString, valid);
+    if (!valid) { return -1; }
+    return fprintf(output, "%s\n", outputString);
+}
+
+void printExpressionToOutputRec(Node* root, char* output, bool* valid) {
+    size_t i;
+    char temp[MAX_LINE_LENGTH + 1];
+
+    // if there was an error, do nothing
+    if (!valid || !root)
+        return;
+
+    if (root == NULL)
+        return;
+
+    // NUMBER / VAR
+
+    if (root->Node_Type == NUM) {
+        if (sprintf(temp, "(%s)", root->val.num) < 0) {
+            *valid = false;
+            return;
+        }
+        strcat(output, temp);
+        return;
+
+    }
+
+    else if (root->Node_Type == VAR) {
+        if (sprintf(temp, "(%s)", root->val.var) < 0) {
+            *valid = false;
+            return;
+        }
+        strcat(output, temp);
+        return;
+    }
+
+    // ASSIGNMENT
+    else if (getNodeType(root) == EQUAL) {
+        if (sprintf(temp, "(%s=", getNodeValue(getChildAt(root, 0))) < 0) {
+            *msg = SP_TREE_ERROR_PRINT_FAILED;
+            return;
+        }
+        strcat(output, temp);
+        if ((getNodeType(getChildAt(root, 1)) == NUMBER) || (getNodeType(getChildAt(root, 1)) == VARIABLE))
+            strcat(output, getNodeValue(getChildAt(root, 1)));
+        else
+            printTreeExpressionRec(getChildAt(root, 1), output, msg);
+        strcat(output, ")");
+        return;
+    }
+
+    // FUNCTIONS
+    if ((getNodeType(root) == MIN) || (getNodeType(root) == MAX)\
+    || (getNodeType(root) == AVERAGE) || (getNodeType(root) == MEDIAN)) {
+        if (sprintf(temp, "(%s(", getNodeValue(root)) < 0) {
+            *msg = SP_TREE_ERROR_PRINT_FAILED;
+            return;
+        }
+        strcat(output, temp);
+        for (i = 0; i < getNodeChildrenSize(root); ++i) {
+            if ((getNodeType(getChildAt(root,i)) == NUMBER) || (getNodeType(getChildAt(root,i)) == VARIABLE))
+                strcat(output, getNodeValue(getChildAt(root, i)));
+            else
+                printTreeExpressionRec(getChildAt(root,i), output, msg);
+            if (i < (getNodeChildrenSize(root) - 1))
+                strcat(output, ",");
+        }
+        strcat(output, "))");
+        return;
+    }
+
+    // BINARY
+    if (getNodeChildrenSize(root) == 2) {
+        strcat(output, "(");
+        for (i = 0; i < 2; ++i ) {
+            if ((getNodeType(getChildAt(root, i)) == NUMBER) || (getNodeType(getChildAt(root, i)) == VARIABLE))
+                strcat(output, getNodeValue(getChildAt(root, i)));
+            else
+                printTreeExpressionRec(getChildAt(root,i), output, msg);
+            if (i < 1)
+                strcat(output, getNodeValue(root));
+        }
+        strcat(output, ")");
+        return;
+    }
+
+    // UNARY
+    if ((getNodeChildrenSize(root) == 1) && ((getNodeType(root) == PLUS) || (getNodeType(root) == MINUS))) {
+        if (sprintf(temp, "(%s", getNodeValue(root)) < 0){
+            *msg = SP_TREE_ERROR_PRINT_FAILED;
+            return;
+        }
+        strcat(output, temp);
+        if ((getNodeType(getChildAt(root,0)) == NUMBER) || (getNodeType(getChildAt(root, 0)) == VARIABLE))
+            strcat(output, getNodeValue(getChildAt(root, 0)));
+        else
+            printTreeExpressionRec(getChildAt(root, 0), output, msg);
+        strcat(output, ")");
+        return;
+    }
+}
+
+
 void printHashMsgToOutput(HashResult msg, FILE* output) {
     switch(msg) {
         case SP_HASH_OUT_OF_MEMORY:
