@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+
+/* code from docs to hash a string */
 #define NUM_ENTRIES 100
 #define PRIME1 571
 #define PRIME2 31
@@ -21,11 +23,17 @@ int hashKey(const char *key) {
 	}
 }
 
+
+
 struct hash_t {
+	/* table of NUM_ENTRIES size, each entry being a list
+	 * of keys sharing the same hash */
 	SPList *table;
+	/* total number of keys in the table at the moment */
 	int size;
 };
 
+/* set error ptr to given error err, if error is not NULL */
 #define SET_ERROR(err) if (NULL != error) { *error = err; }
 
 
@@ -48,7 +56,7 @@ SPHash hashCreate() {
 		if (NULL != newList) {
 			hash->table[i] = newList;
 		} else { /* (NULL == newList) */
-			/* alloc failed, clean up */
+			/* alloc failed, clean up all already-allocated lists */
 			for(int j = i-1; j >= 0; j++) {
 				listDestroy(hash->table[j]);
 				free(hash->table);
@@ -62,17 +70,11 @@ SPHash hashCreate() {
 	return hash;
 }
 
-/**
- * hashDestroy: Deallocates an existing hashtable. Clears all elements by using
- * the stored free function.
- *
- * @param hash Target SPHash to be deallocated. If hash is NULL nothing will be
- * done
- */
 void hashDestroy(SPHash hash) {
 	if (NULL == hash) {
 		return;
 	}
+
 	for(int i = 0; i < NUM_ENTRIES; i++) {
 		listDestroy(hash->table[i]);
 	}
@@ -90,7 +92,7 @@ double *hashGetValue(SPHash hash, char *key, HashResult *error) {
 	LIST_FOREACH(SPListElement, e, items) {
 		if (isElementStrEquals(e, key)) {
 			/* match found! */
-			SET_ERROR(SP_HASH_OK)
+			SET_ERROR(SP_HASH_OK);
 			return getElementValue(e);
 		}
 	}
@@ -124,8 +126,8 @@ bool hashInsert(SPHash hash, char *key, double value, HashResult *error) {
 	if (SP_LIST_SUCCESS == listInsertFirst(items, newElement)) {
 		/* we added a new item, didn't replace an existing one */
 		hash->size++;
-		SET_ERROR(SP_HASH_OK);
 		destroyElement(newElement);
+		SET_ERROR(SP_HASH_OK);
 		return true;
 	} else {
 		destroyElement(newElement);
@@ -147,6 +149,7 @@ bool hashDelete(SPHash hash, char *key, HashResult *error) {
 		if (isElementStrEquals(e, key)) {
 			/* match found - remove */
 			ListResult result = listRemoveCurrent(items);
+			/* we know list iterator is valid */
 			assert(result == SP_LIST_SUCCESS);
 			/* removed an item so update item count */
 			hash->size--;
