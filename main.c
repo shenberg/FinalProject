@@ -27,7 +27,6 @@ int main(int argc, char* argv[]) {
     }
 
     while (fgets(line, MAX_LINE_LEN, stdin) != NULL) {
-        printf("%s\n", line);
         strtok(line, "\n"); // remove '\n' if we got one in string
         if (!strcmp(line, TERMINATION_LINE)) {
             if (output != stdout) { fprintf(output, "%s\n", TERMINATION_LINE); }
@@ -40,7 +39,7 @@ int main(int argc, char* argv[]) {
             printError();
             exit(1);
         }
-        if (output != stdout || true) { //TODO!
+        if (output != stdout) {
             printTreeExpression(tree, output);
             fprintf(output,"\n");
         }
