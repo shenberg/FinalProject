@@ -231,7 +231,7 @@ double calcTree(Node* tree, SPHash hash, bool* status) {
         else if (op == AVG) {
             result = 0;
             *status = true;
-            for (i = 0; i < tree->numOfSons && status; i++) {
+            for (i = 0; i < tree->numOfSons && *status; i++) {
                 result += calcTree(tree->children[i], hash, status);
             }
             if (*status) {
