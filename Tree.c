@@ -74,7 +74,6 @@ Node* varSubStringToNode(char* line, const size_t start, const size_t end) {
     char var[end - start];
     strncpy(var, line + start + 1, end - start - 1);
     var[end - start - 1] = '\0';
-    //printf("var name: %s\n", var); //TODO: remove
     return newVarNode(var);
 }
 
@@ -87,7 +86,6 @@ void attachNewChildToParentBySubstring(Node* parent, char* line, size_t start, s
 
 
 Node* opSubStringToNode(char* line, size_t start, size_t end) {
-    //printf("opSubStringToNode(%p,%zu,%zu)\n", line, start, end); //TODO:remove
     Op op;
     switch(line[start + 1]) {
         case '+': op = ADD; break;
@@ -118,7 +116,6 @@ Node* opSubStringToNode(char* line, size_t start, size_t end) {
             openedPars--;
             if (openedPars == 0) {
                 subEnd = current;
-                //printf("going to sub-child: %zu-%zu (%zu-%zu)\n", subStart, subEnd, start, end);//TODO:remove
                 // this function is safe: if mem alloc for chils fails,
                 // it frees the string and the tree from the root and then exit.
                 // new nodes can only be created as children of op nodes,
@@ -134,8 +131,7 @@ Node* opSubStringToNode(char* line, size_t start, size_t end) {
 
 
 Node* generalSubStringToNode(char* line, size_t start, size_t end) {
-    //printf("%zu-%zu, %d (%c), %s\n", start, end, line[end], line[end], line);//TODO:remove
-    // not lisp tree?
+    // we assume input is valid lisp tree
     assert (line[0] == '(' && line[end] == ')');
 
     char c = line[start + 1];
@@ -181,7 +177,6 @@ double calcTree(Node* tree, SPHash hash, bool* status) {
         *status = true;
         return tree->val.num;
     case TYPE_VAR:
-        //printf("getting hash for var %s\n", t) //TODO:remove
         hashValue = hashGetValue(hash, tree->val.var, &error);
         if (error == SP_HASH_OUT_OF_MEMORY) {
             printError();
