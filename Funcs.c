@@ -48,7 +48,7 @@ void printTreeExpression(Node *node, FILE *output) {
     fprintf(output, "(");
     switch(node->type) {
     case TYPE_NUM:
-        fprintf(output, "%.2f", node->val.num);
+        fprintf(output, "%.0f", node->val.num);
         break;
     case TYPE_VAR:
         fprintf(output, "%s", node->val.var);
