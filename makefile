@@ -2,7 +2,7 @@ all:
 	cd SP; make all
 	$(MAKE) SPCalculator
 SPCalculator: main.o Tree.o Funcs.o SPHash.o SPList.o SPListElement.o
-	gcc -std=c99 -Wall -Werror -pedantic-errors main.o Tree.o Funcs.o SPHash.o SPList.o SPListElement.o -o SPCalculator
+	gcc -std=c99 -Wall -Werror -pedantic-errors main.o Tree.o Funcs.o SPHash.o SPList.o SPListElement.o -o SPCalculator -lm
 
 SPList.o: SPList.c SPList.h SPListElement.h
 	gcc -std=c99 -Wall -Werror -pedantic-errors -c SPList.c
