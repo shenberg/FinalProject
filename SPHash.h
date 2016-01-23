@@ -1,3 +1,7 @@
+/*
+ * Author: Roee Shenberg
+ */
+
 #ifndef SPHASH_H__
 #define SPHASH_H__
 
@@ -71,6 +75,8 @@ bool hashInsert(SPHash hash, char *key, double value, HashResult *error);
 /**
  * hashDelete: Remove mapping for given key
  *
+ * Errors: SP_HASH_NULL_ARGUMENT if hash==NULL
+ *
  * @param hash hashtable to remove the key from
  * @param key the key to remove
  * @param error out param, operation status. Can be NULL if don't care
@@ -83,6 +89,8 @@ bool hashDelete(SPHash hash, char *key, HashResult *error);
 /**
  * hashContains: does the hash table contain a given key?
  *
+ * Errors: SP_HASH_NULL_ARGUMENT if hash==NULL
+ *
  * @param hash hashtable to read from
  * @param key the key to test for
  * @param error out param, operation status. Can be NULL if don't care
@@ -94,6 +102,8 @@ bool hashContains(SPHash hash, char *key, HashResult *error);
 /**
  * hashIsEmpty: does the hash-table have any key->value mappings?
  *
+ * Errors: SP_HASH_NULL_ARGUMENT if hash==NULL
+ *
  * @param hash hashtable to test
  * @param error out param, operation status. Can be NULL if don't care
  *
@@ -103,6 +113,8 @@ bool hashIsEmpty(SPHash hash, HashResult *error);
 
 /**
  * hashGetSize: get number of key->value mappings in the hash table
+ *
+ * Errors: SP_HASH_NULL_ARGUMENT if hash==NULL
  *
  * @param hash hashtable to read from
  * @param error out param, operation status. Can be NULL if don't care

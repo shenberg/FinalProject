@@ -1,4 +1,7 @@
-
+/*
+ * Author: Roee Shenberg
+ */
+ 
 #include "SPHash.h"
 #include "SPList.h"
 #include <stdlib.h>
@@ -24,7 +27,7 @@ int hashKey(const char *key) {
 }
 
 
-
+/* Actual SPHash struct */
 struct hash_t {
 	/* table of NUM_ENTRIES size, each entry being a list
 	 * of keys sharing the same hash */
