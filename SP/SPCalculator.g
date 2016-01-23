@@ -79,8 +79,8 @@ im_exp returns [SPTree tree]	: e1=INT {$tree = new SPTree($e1.text);}
 // transform function string into appropriate sigil for easier handling in C
 func_call returns [SPTree tree] : ( MIN {$tree = new SPTree("?");}
 								  | MAX {$tree = new SPTree("!");}
-								  | AVG {$tree = new SPTree("@");}
-								  | MEDIAN {$tree = new SPTree("%");}
+								  | AVG {$tree = new SPTree("%");}
+								  | MEDIAN {$tree = new SPTree("@");}
 								  )
 								  LB e1=exp {$tree.insertChild($e1.tree);}
 								  (COMMA e2=exp {$tree.insertChild($e2.tree);})*
